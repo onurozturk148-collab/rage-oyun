@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>RAGE Oyun</title>
+
+<style>
+body { margin:0; font-family:Arial; background:#1a1a1a; color:white;}
+.header { background:black; padding:20px; text-align:center; font-size:30px; color:red;}
+.container { display:flex;}
+.left { width:20%; background:#2b2b2b; padding:10px;}
+.menu-item { padding:10px; border-bottom:1px solid #444; cursor:pointer;}
+.menu-item:hover { background:#444;}
+.center { width:60%; padding:20px;}
+.right { width:20%; background:#2b2b2b; padding:10px;}
+button { padding:10px; background:red; color:white; border:none; cursor:pointer; margin-top:10px;}
+button:hover { background:darkred;}
+</style>
+</head>
+
+<body>
+
+<div class="header">RAGE</div>
+
+<div class="container">
+
+<div class="left">
+  <div class="menu-item" onclick="ekran('soygun')">💰 Soygun</div>
+  <div class="menu-item" onclick="ekran('ekipman')">🔫 Ekipman</div>
+</div>
+
+<div class="center" id="icerik">Hoş geldin!</div>
+
+<div class="right">
+  <p>💰 Para: <span id="para">0</span></p>
+  <p>⭐ Level: <span id="level">1</span></p>
+  <p>🔫 Silah: <span id="silah">Yok</span></p>
+  <p>🎭 Maske: <span id="maske">Yok</span></p>
+  <p id="durum">Hazır</p>
+</div>
+
+</div>
+
+<script>
+
+let para = 0;
+let level = 1;
+let silah = false;
+let maske = false;
+let hapiste = false;
+let cooldown = false;
+
+/* 🔥 KAYIT YÜKLE */
+function yukle(){
+let data = JSON.parse(localStorage.getItem("oyun"));
+
+if(data){
+para = data.para;
+level = data.level;
+silah = data.silah;
+maske = data.maske;
+}
+}
+
+/* 💾 KAYDET */
+function kaydet(){
+let data = {
+para: para,
+level: level,
+silah: silah,
+maske: maske
+};
+
+localStorage.setItem("oyun", JSON.stringify(data));
+}
+
+function ekran(sayfa){
+
+if(sayfa=="soygun"){
+document.getElementById("icerik").innerHTML = `
+<h2>💰 Soygun Seç</h2>
+
+<button onclick="soygun(1)">🚗 Araba Soygunu</button>
+<button onclick="soygun(2)">🏠 Ev Soygunu</button>
+<button onclick="soygun(3)">🏦 Banka Soygunu</button>
+
+<p id="sonuc"></p>
+`;
+}
+
+if(sayfa=="ekipman"){
+document.getElementById("icerik").innerHTML = `
+<h2>🔫 Ekipman</h2>
+
+<button onclick="silahAl()">Silah Al (500)</button>
+<button onclick="maskeAl()">Maske Al (300)</button>
+`;
+}
+
+}
+
+function soygun(tip){
+
+if(hapiste){
+sonucYaz("⛔ Hapistesin!");
+return;
+}
+
+if(cooldown){
+sonucYaz("⏳ Bekle...");
+return;
+}
+
+cooldown=true;
+
+let sans = Math.random();
+
+let basari = 0;
+
+if(tip==1) basari=0.7;
+if(tip==2) basari=0.5;
+if(tip==3) basari=0.3;
+
+if(silah) basari += 0.1;
+if(maske) basari += 0.1;
+
+if(sans < basari){
+
+let kazanc = (tip * 200) + (level*50);
+para += kazanc;
+
+sonucYaz("✅ Başarılı +"+kazanc);
+
+}else{
+sonucYaz("🚓 Yakalandın!");
+hapseGir();
+}
+
+levelKontrol();
+guncelle();
+kaydet(); // 🔥 HER İŞLEM SONRASI KAYDET
+
+setTimeout(()=>{cooldown=false;},3000);
+
+}
+
+function hapseGir(){
+
+hapiste=true;
+let sure = 10 + (level*2);
+
+let interval = setInterval(()=>{
+
+sure--;
+document.getElementById("durum").innerText="Hapiste: "+sure+" sn";
+
+if(sure<=0){
+hapiste=false;
+document.getElementById("durum").innerText="Özgürsün 😎";
+clearInterval(interval);
+}
+
+},1000);
+
+}
+
+function silahAl(){
+if(para>=500){
+para-=500;
+silah=true;
+guncelle();
+kaydet();
+}
+}
+
+function maskeAl(){
+if(para>=300){
+para-=300;
+maske=true;
+guncelle();
+kaydet();
+}
+}
+
+function levelKontrol(){
+if(para > level*800){
+level++;
+document.getElementById("durum").innerText="🔥 Level Atladın!";
+}
+}
+
+function sonucYaz(yazi){
+document.getElementById("sonuc").innerText=yazi;
+}
+
+function guncelle(){
+document.getElementById("para").innerText=para;
+document.getElementById("level").innerText=level;
+document.getElementById("silah").innerText=silah ? "Var" : "Yok";
+document.getElementById("maske").innerText=maske ? "Var" : "Yok";
+}
+
+/* SAYFA AÇILINCA */
+yukle();
+guncelle();
+
+</script>
+
+</body>
+</html>
