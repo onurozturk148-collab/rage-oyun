@@ -2,7 +2,10 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>RAGE Oyun</title>
+<title>RAGE Online</title>
+
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
 body { margin:0; font-family:Arial; background:#1a1a1a; color:white;}
@@ -13,20 +16,22 @@ body { margin:0; font-family:Arial; background:#1a1a1a; color:white;}
 .menu-item:hover { background:#444;}
 .center { width:60%; padding:20px;}
 .right { width:20%; background:#2b2b2b; padding:10px;}
-button { padding:10px; background:red; color:white; border:none; cursor:pointer; margin-top:10px;}
-button:hover { background:darkred;}
+button { padding:10px; background:red; color:white; border:none; margin-top:10px;}
+input { padding:5px; margin-top:5px; width:100%;}
 </style>
 </head>
 
 <body>
 
-<div class="header">RAGE</div>
+<div class="header">RAGE ONLINE</div>
 
 <div class="container">
 
 <div class="left">
   <div class="menu-item" onclick="ekran('soygun')">💰 Soygun</div>
   <div class="menu-item" onclick="ekran('ekipman')">🔫 Ekipman</div>
+  <div class="menu-item" onclick="ekran('oyuncular')">👥 Oyuncular</div>
+  <div class="menu-item" onclick="ekran('banka')">🏦 Banka</div>
 </div>
 
 <div class="center" id="icerik">Hoş geldin!</div>
@@ -43,6 +48,18 @@ button:hover { background:darkred;}
 
 <script>
 
+// 🔥 FIREBASE
+const firebaseConfig = {
+  apiKey: "AIzaSyCSQZUKC4ci14LU4e4KpniDfTvZqzUJA",
+  authDomain: "test-mode-bbc5d.firebaseapp.com",
+  databaseURL: "https://test-mode-bbc5d-default-rtdb.firebaseio.com",
+  projectId: "test-mode-bbc5d"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// 🎮 OYUN
 let para = 0;
 let level = 1;
 let silah = false;
@@ -50,40 +67,30 @@ let maske = false;
 let hapiste = false;
 let cooldown = false;
 
-/* 🔥 KAYIT YÜKLE */
-function yukle(){
-let data = JSON.parse(localStorage.getItem("oyun"));
+let isim = prompt("İsmin:");
+let oyuncuID = isim + "_" + Math.floor(Math.random()*1000);
 
-if(data){
-para = data.para;
-level = data.level;
-silah = data.silah;
-maske = data.maske;
-}
-}
+// 🔥 ONLINE KAYIT
+db.ref("oyuncular/" + oyuncuID).set({
+  isim: isim,
+  para: 0
+});
 
-/* 💾 KAYDET */
-function kaydet(){
-let data = {
-para: para,
-level: level,
-silah: silah,
-maske: maske
-};
+// 🔥 PARA SENKRON
+db.ref("oyuncular/" + oyuncuID + "/para").on("value", snap=>{
+  if(snap.val()!=null){
+    para = snap.val();
+    guncelle();
+  }
+});
 
-localStorage.setItem("oyun", JSON.stringify(data));
-}
-
+// 📺 SAYFA
 function ekran(sayfa){
 
 if(sayfa=="soygun"){
 document.getElementById("icerik").innerHTML = `
-<h2>💰 Soygun Seç</h2>
-
-<button onclick="soygun(1)">🚗 Araba Soygunu</button>
-<button onclick="soygun(2)">🏠 Ev Soygunu</button>
-<button onclick="soygun(3)">🏦 Banka Soygunu</button>
-
+<h2>💰 Soygun</h2>
+<button onclick="soygun()">Soygun Yap</button>
 <p id="sonuc"></p>
 `;
 }
@@ -91,85 +98,84 @@ document.getElementById("icerik").innerHTML = `
 if(sayfa=="ekipman"){
 document.getElementById("icerik").innerHTML = `
 <h2>🔫 Ekipman</h2>
-
 <button onclick="silahAl()">Silah Al (500)</button>
 <button onclick="maskeAl()">Maske Al (300)</button>
 `;
 }
 
+if(sayfa=="oyuncular"){
+db.ref("oyuncular").on("value", snap=>{
+let data = snap.val();
+let html = "<h2>👥 Oyuncular</h2>";
+
+for(let i in data){
+html += "<p>" + data[i].isim + " - 💰 " + data[i].para + "</p>";
 }
 
-function soygun(tip){
-
-if(hapiste){
-sonucYaz("⛔ Hapistesin!");
-return;
+document.getElementById("icerik").innerHTML = html;
+});
 }
 
-if(cooldown){
-sonucYaz("⏳ Bekle...");
-return;
+if(sayfa=="banka"){
+document.getElementById("icerik").innerHTML = `
+<h2>🏦 Para Gönder</h2>
+<input id="hedef" placeholder="Oyuncu adı">
+<input id="miktar" placeholder="Miktar">
+<button onclick="paraGonder()">Gönder</button>
+`;
 }
 
-cooldown=true;
+}
+
+// 🎲 SOYGUN
+function soygun(){
+
+if(hapiste){ sonucYaz("⛔ Hapistesin"); return; }
+if(cooldown){ sonucYaz("⏳ Bekle"); return; }
+
+cooldown = true;
 
 let sans = Math.random();
 
-let basari = 0;
-
-if(tip==1) basari=0.7;
-if(tip==2) basari=0.5;
-if(tip==3) basari=0.3;
-
-if(silah) basari += 0.1;
-if(maske) basari += 0.1;
-
-if(sans < basari){
-
-let kazanc = (tip * 200) + (level*50);
+if(sans < 0.6){
+let kazanc = Math.floor(Math.random()*200);
 para += kazanc;
-
-sonucYaz("✅ Başarılı +"+kazanc);
-
+sonucYaz("✅ +" + kazanc);
 }else{
 sonucYaz("🚓 Yakalandın!");
 hapseGir();
 }
 
-levelKontrol();
 guncelle();
-kaydet(); // 🔥 HER İŞLEM SONRASI KAYDET
+onlineKaydet();
 
 setTimeout(()=>{cooldown=false;},3000);
-
 }
 
+// 🚓 HAPİS
 function hapseGir(){
-
 hapiste=true;
-let sure = 10 + (level*2);
+let sure=10;
 
-let interval = setInterval(()=>{
-
+let interval=setInterval(()=>{
 sure--;
-document.getElementById("durum").innerText="Hapiste: "+sure+" sn";
+document.getElementById("durum").innerText="Hapiste: "+sure;
 
 if(sure<=0){
 hapiste=false;
-document.getElementById("durum").innerText="Özgürsün 😎";
+document.getElementById("durum").innerText="Özgürsün";
 clearInterval(interval);
 }
-
 },1000);
-
 }
 
+// 🔫 EKİPMAN
 function silahAl(){
 if(para>=500){
 para-=500;
 silah=true;
 guncelle();
-kaydet();
+onlineKaydet();
 }
 }
 
@@ -178,17 +184,46 @@ if(para>=300){
 para-=300;
 maske=true;
 guncelle();
-kaydet();
+onlineKaydet();
 }
 }
 
-function levelKontrol(){
-if(para > level*800){
-level++;
-document.getElementById("durum").innerText="🔥 Level Atladın!";
+// 🏦 PARA GÖNDER
+function paraGonder(){
+
+let hedef=document.getElementById("hedef").value;
+let miktar=Number(document.getElementById("miktar").value);
+
+if(miktar>para){ alert("Paran yok"); return; }
+
+db.ref("oyuncular").once("value", snap=>{
+let data=snap.val();
+
+for(let i in data){
+if(data[i].isim==hedef){
+
+db.ref("oyuncular/"+i).update({
+para:data[i].para+miktar
+});
+
+para-=miktar;
+
+onlineKaydet();
+
+alert("Gönderildi!");
 }
+}
+});
 }
 
+// 🔥 ONLINE KAYDET
+function onlineKaydet(){
+db.ref("oyuncular/"+oyuncuID).update({
+para:para
+});
+}
+
+// 📊 UI
 function sonucYaz(yazi){
 document.getElementById("sonuc").innerText=yazi;
 }
@@ -196,12 +231,10 @@ document.getElementById("sonuc").innerText=yazi;
 function guncelle(){
 document.getElementById("para").innerText=para;
 document.getElementById("level").innerText=level;
-document.getElementById("silah").innerText=silah ? "Var" : "Yok";
-document.getElementById("maske").innerText=maske ? "Var" : "Yok";
+document.getElementById("silah").innerText=silah?"Var":"Yok";
+document.getElementById("maske").innerText=maske?"Var":"Yok";
 }
 
-/* SAYFA AÇILINCA */
-yukle();
 guncelle();
 
 </script>
