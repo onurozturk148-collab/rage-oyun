@@ -38,7 +38,6 @@ input { padding:5px; margin-top:5px; width:100%;}
 
 <div class="right">
   <p>💰 Para: <span id="para">0</span></p>
-  <p>⭐ Level: <span id="level">1</span></p>
   <p>🔫 Silah: <span id="silah">Yok</span></p>
   <p id="durum">Hazır</p>
 </div>
@@ -58,23 +57,41 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
+// 👤 KAYIT SİSTEMİ (FULL FIX)
+let isim = localStorage.getItem("isim");
+
+if(!isim || isim == "null" || isim.trim() == ""){
+  isim = prompt("İsmini gir:");
+  if(!isim || isim.trim()==""){
+    isim = "Oyuncu" + Math.floor(Math.random()*1000);
+  }
+  localStorage.setItem("isim", isim);
+}
+
+let oyuncuID = localStorage.getItem("oyuncuID");
+
+if(!oyuncuID){
+  oyuncuID = isim + "_" + Math.floor(Math.random()*1000);
+  localStorage.setItem("oyuncuID", oyuncuID);
+}
+
 // 🎮 OYUN
 let para = 0;
-let level = 1;
 let silah = "yok";
 let hapiste = false;
 let cooldown = false;
 
-let isim = prompt("İsmin:");
-let oyuncuID = isim + "_" + Math.floor(Math.random()*1000);
-
-// 🔥 ONLINE KAYIT
-db.ref("oyuncular/" + oyuncuID).set({
-  isim: isim,
-  para: 0
+// 🔥 DATABASE KAYIT (tekrar açılmaz)
+db.ref("oyuncular/" + oyuncuID).once("value", snap=>{
+  if(!snap.exists()){
+    db.ref("oyuncular/" + oyuncuID).set({
+      isim: isim,
+      para: 0
+    });
+  }
 });
 
-// 🔥 PARA SENKRON
+// 🔄 PARA SENKRON
 db.ref("oyuncular/" + oyuncuID + "/para").on("value", snap=>{
   if(snap.val()!=null){
     para = snap.val();
@@ -89,10 +106,10 @@ if(sayfa=="soygun"){
 document.getElementById("icerik").innerHTML = `
 <h2>💰 Soygun</h2>
 
-<button onclick="soygun('kolay')">🚗 Kolay Soygun</button>
-<button onclick="soygun('orta')">🏪 Orta Soygun</button>
-<button onclick="soygun('zor')">🏦 Zor Soygun</button>
-<button onclick="soygun('efsane')">💎 Efsane Soygun</button>
+<button onclick="soygun('kapkac')">🏃 Kapkaççılık</button>
+<button onclick="soygun('araba')">🚗 Araba</button>
+<button onclick="soygun('market')">🏪 Market</button>
+<button onclick="soygun('banka')">🏦 Banka</button>
 
 <p id="sonuc"></p>
 `;
@@ -102,9 +119,7 @@ if(sayfa=="ekipman"){
 document.getElementById("icerik").innerHTML = `
 <h2>🔫 Silahlar</h2>
 
-<button onclick="silahAl('bıçak',100)">🪓 Bıçak (100)</button>
 <button onclick="silahAl('tabanca',500)">🔫 Tabanca (500)</button>
-<button onclick="silahAl('smg',1000)">🔥 SMG (1000)</button>
 <button onclick="silahAl('ak47',2000)">💣 AK-47 (2000)</button>
 <button onclick="silahAl('sniper',4000)">☠️ Sniper (4000)</button>
 `;
@@ -116,7 +131,9 @@ let data = snap.val();
 let html = "<h2>👥 Oyuncular</h2>";
 
 for(let i in data){
+if(data[i].isim){
 html += "<p>" + data[i].isim + " - 💰 " + data[i].para + "</p>";
+}
 }
 
 document.getElementById("icerik").innerHTML = html;
@@ -134,13 +151,11 @@ document.getElementById("icerik").innerHTML = `
 
 }
 
-// 🔫 SİLAH GÜCÜ
+// 🔫 SİLAH BONUS
 function silahBonus(){
-if(silah=="bıçak") return 0.05;
-if(silah=="tabanca") return 0.10;
-if(silah=="smg") return 0.15;
+if(silah=="tabanca") return 0.1;
 if(silah=="ak47") return 0.25;
-if(silah=="sniper") return 0.40;
+if(silah=="sniper") return 0.4;
 return 0;
 }
 
@@ -155,10 +170,10 @@ cooldown=true;
 let risk=0;
 let odul=0;
 
-if(tur=="kolay"){ risk=0.2; odul=Math.random()*100; }
-if(tur=="orta"){ risk=0.4; odul=Math.random()*300; }
-if(tur=="zor"){ risk=0.6; odul=Math.random()*800; }
-if(tur=="efsane"){ risk=0.8; odul=Math.random()*2000; }
+if(tur=="kapkac"){ risk=0.2; odul=Math.random()*100; }
+if(tur=="araba"){ risk=0.4; odul=Math.random()*300; }
+if(tur=="market"){ risk=0.6; odul=Math.random()*800; }
+if(tur=="banka"){ risk=0.8; odul=Math.random()*2000; }
 
 let sans = Math.random() + silahBonus();
 
@@ -245,7 +260,6 @@ document.getElementById("sonuc").innerText=yazi;
 
 function guncelle(){
 document.getElementById("para").innerText=para;
-document.getElementById("level").innerText=level;
 document.getElementById("silah").innerText=silah;
 }
 
