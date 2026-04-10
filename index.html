@@ -40,7 +40,6 @@ input { padding:5px; margin-top:5px; width:100%;}
   <p>💰 Para: <span id="para">0</span></p>
   <p>⭐ Level: <span id="level">1</span></p>
   <p>🔫 Silah: <span id="silah">Yok</span></p>
-  <p>🎭 Maske: <span id="maske">Yok</span></p>
   <p id="durum">Hazır</p>
 </div>
 
@@ -62,8 +61,7 @@ const db = firebase.database();
 // 🎮 OYUN
 let para = 0;
 let level = 1;
-let silah = false;
-let maske = false;
+let silah = "yok";
 let hapiste = false;
 let cooldown = false;
 
@@ -90,16 +88,25 @@ function ekran(sayfa){
 if(sayfa=="soygun"){
 document.getElementById("icerik").innerHTML = `
 <h2>💰 Soygun</h2>
-<button onclick="soygun()">Soygun Yap</button>
+
+<button onclick="soygun('kolay')">🚗 Kolay Soygun</button>
+<button onclick="soygun('orta')">🏪 Orta Soygun</button>
+<button onclick="soygun('zor')">🏦 Zor Soygun</button>
+<button onclick="soygun('efsane')">💎 Efsane Soygun</button>
+
 <p id="sonuc"></p>
 `;
 }
 
 if(sayfa=="ekipman"){
 document.getElementById("icerik").innerHTML = `
-<h2>🔫 Ekipman</h2>
-<button onclick="silahAl()">Silah Al (500)</button>
-<button onclick="maskeAl()">Maske Al (300)</button>
+<h2>🔫 Silahlar</h2>
+
+<button onclick="silahAl('bıçak',100)">🪓 Bıçak (100)</button>
+<button onclick="silahAl('tabanca',500)">🔫 Tabanca (500)</button>
+<button onclick="silahAl('smg',1000)">🔥 SMG (1000)</button>
+<button onclick="silahAl('ak47',2000)">💣 AK-47 (2000)</button>
+<button onclick="silahAl('sniper',4000)">☠️ Sniper (4000)</button>
 `;
 }
 
@@ -127,20 +134,38 @@ document.getElementById("icerik").innerHTML = `
 
 }
 
+// 🔫 SİLAH GÜCÜ
+function silahBonus(){
+if(silah=="bıçak") return 0.05;
+if(silah=="tabanca") return 0.10;
+if(silah=="smg") return 0.15;
+if(silah=="ak47") return 0.25;
+if(silah=="sniper") return 0.40;
+return 0;
+}
+
 // 🎲 SOYGUN
-function soygun(){
+function soygun(tur){
 
 if(hapiste){ sonucYaz("⛔ Hapistesin"); return; }
 if(cooldown){ sonucYaz("⏳ Bekle"); return; }
 
-cooldown = true;
+cooldown=true;
 
-let sans = Math.random();
+let risk=0;
+let odul=0;
 
-if(sans < 0.6){
-let kazanc = Math.floor(Math.random()*200);
-para += kazanc;
-sonucYaz("✅ +" + kazanc);
+if(tur=="kolay"){ risk=0.2; odul=Math.random()*100; }
+if(tur=="orta"){ risk=0.4; odul=Math.random()*300; }
+if(tur=="zor"){ risk=0.6; odul=Math.random()*800; }
+if(tur=="efsane"){ risk=0.8; odul=Math.random()*2000; }
+
+let sans = Math.random() + silahBonus();
+
+if(sans > risk){
+let kazanc=Math.floor(odul);
+para+=kazanc;
+sonucYaz("💰 +" + kazanc);
 }else{
 sonucYaz("🚓 Yakalandın!");
 hapseGir();
@@ -169,20 +194,11 @@ clearInterval(interval);
 },1000);
 }
 
-// 🔫 EKİPMAN
-function silahAl(){
-if(para>=500){
-para-=500;
-silah=true;
-guncelle();
-onlineKaydet();
-}
-}
-
-function maskeAl(){
-if(para>=300){
-para-=300;
-maske=true;
+// 🔫 SİLAH AL
+function silahAl(ad,fiyat){
+if(para>=fiyat){
+para-=fiyat;
+silah=ad;
 guncelle();
 onlineKaydet();
 }
@@ -207,7 +223,6 @@ para:data[i].para+miktar
 });
 
 para-=miktar;
-
 onlineKaydet();
 
 alert("Gönderildi!");
@@ -231,8 +246,7 @@ document.getElementById("sonuc").innerText=yazi;
 function guncelle(){
 document.getElementById("para").innerText=para;
 document.getElementById("level").innerText=level;
-document.getElementById("silah").innerText=silah?"Var":"Yok";
-document.getElementById("maske").innerText=maske?"Var":"Yok";
+document.getElementById("silah").innerText=silah;
 }
 
 guncelle();
