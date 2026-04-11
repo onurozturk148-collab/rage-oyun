@@ -2,101 +2,165 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>RAGE</title>
+<title>RAGE ULTIMATE FULL</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
-body { margin:0; font-family:Arial; background:#111; color:white; }
-.header { background:#000; border-bottom:2px solid red; text-align:center; padding:20px; font-size:30px; color:red; }
-.container { display:flex; }
-.left { width:220px; background:#1b1b1b; }
-.menu-title { background:#000; padding:10px; color:#aaa; }
-.menu-item { padding:10px; border-bottom:1px solid #333; cursor:pointer; }
-.menu-item:hover { background:#333; }
-.center { flex:1; padding:10px; }
-.panel { background:#1b1b1b; border:1px solid #333; margin-bottom:10px; padding:10px; }
-.right { width:250px; background:#1b1b1b; padding:10px; }
-.stat { padding:8px; border-bottom:1px solid #333; }
-button { width:100%; padding:10px; margin-top:5px; background:red; border:none; color:white; cursor:pointer; }
-input { width:100%; padding:8px; margin-top:5px; }
+body{margin:0;background:#111;color:white;font-family:Arial;}
+.header{background:black;color:red;text-align:center;padding:20px;font-size:28px;border-bottom:2px solid red;}
+.layout{display:flex;}
+.sidebar{width:230px;background:#1a1a1a;padding:10px;}
+.box{background:#222;margin-bottom:10px;padding:10px;border:1px solid #333;}
+.box h3{margin:0 0 10px 0;color:#aaa;}
+.box div{padding:6px;cursor:pointer;}
+.box div:hover{background:#333;}
+.main{flex:1;padding:15px;}
+.right{width:260px;background:#1a1a1a;padding:10px;}
+.panel{background:#222;padding:10px;margin-bottom:10px;border:1px solid #333;}
+button{width:100%;padding:10px;background:red;border:none;color:white;margin-top:5px;}
+select,input{width:100%;padding:8px;margin-top:5px;}
 </style>
-
 </head>
+
 <body>
 
-<div class="header">RAGE</div>
+<div class="header">RAGE ULTIMATE</div>
 
-<div class="container">
+<div class="layout">
 
-<div class="left">
-<div class="menu-title">GENEL</div>
-<div class="menu-item" onclick="ekran('soygun')">Soygun</div>
-<div class="menu-item" onclick="ekran('ekipman')">Ekipman</div>
+<div class="sidebar">
 
-<div class="menu-title">SOSYAL</div>
-<div class="menu-item" onclick="oyuncular()">Oyuncular</div>
-<div class="menu-item" onclick="liderlik()">Liderlik</div>
-<div class="menu-item" onclick="saldir()">Saldır</div>
-
-<div class="menu-title">ÇEVRE</div>
-<div class="menu-item" onclick="ekran('banka')">Banka</div>
+<div class="box">
+<h3>Genel</h3>
+<div onclick="ekran('soygun')">Soygun</div>
+<div onclick="ekran('envanter')">Envanter</div>
+<div onclick="ekran('ekipman')">Ekipman</div>
 </div>
 
-<div class="center" id="icerik"></div>
+<div class="box">
+<h3>Sosyal</h3>
+<div onclick="oyuncular()">Oyuncular</div>
+<div onclick="liderlik()">Liderlik</div>
+<div onclick="ekran('saldir')">Saldır</div>
+</div>
+
+<div class="box">
+<h3>Ekonomi</h3>
+<div onclick="ekran('banka')">Banka</div>
+<div onclick="ekran('tuccar')">Araç Tüccarı</div>
+</div>
+
+<div class="box">
+<h3>Kumarhane</h3>
+<div onclick="ekran('kumar')">Blackjack</div>
+<div onclick="ekran('kazi')">Kazı Kazan</div>
+</div>
+
+</div>
+
+<div class="main" id="icerik"></div>
 
 <div class="right">
-<div class="stat">💰 Nakit: <span id="para">0</span></div>
-<div class="stat">🏦 Banka: <span id="banka">0</span></div>
-<div class="stat">💪 Güç: <span id="guc">1</span></div>
-<div class="stat">🔫 Silah: <span id="silah">yok</span></div>
-<div class="stat" id="durum">Özgür</div>
+<p>💰 <span id="para">0</span></p>
+<p>🏦 <span id="banka">0</span></p>
+<p>💪 <span id="guc">1</span></p>
+<p>🔫 <span id="silah">yok</span></p>
+<p>🔑 <span id="maymuncuk">0</span></p>
+<p>⛓️ <span id="durum">Özgür</span></p>
+<p id="hapissayac" style="color:red;"></p>
 </div>
 
 </div>
 
 <script>
 
+ // 🎒 ITEM SİSTEMİ
+const itemler = [
+{isim:"Bıçak", tip:"silah", guc:2},
+{isim:"Tabanca", tip:"silah", guc:5},
+{isim:"AK47", tip:"silah", guc:10},
+{isim:"Maymuncuk", tip:"arac"},
+{isim:"Zırh", tip:"defans"}
+];
+
+// ==========================
+// 🚗 ARAÇ SİSTEMİ (FULL)
+// ==========================
+
+const araclar = [
+
+/* UCUZ */
+{isim:"Tofaş Şahin", deger:500, sans:0.5},
+{isim:"Renault 9", deger:600, sans:0.5},
+{isim:"Doğan SLX", deger:700, sans:0.5},
+
+/* ORTA */
+{isim:"Toyota Corolla", deger:1500, sans:0.25},
+{isim:"Honda Civic", deger:1800, sans:0.25},
+{isim:"Ford Focus", deger:1700, sans:0.25},
+
+/* İYİ */
+{isim:"BMW 3 Serisi", deger:4000, sans:0.15},
+{isim:"Mercedes C Serisi", deger:4500, sans:0.15},
+{isim:"Audi A4", deger:4200, sans:0.15},
+
+/* LÜKS */
+{isim:"BMW M5", deger:8000, sans:0.04},
+{isim:"Audi RS7", deger:9000, sans:0.04},
+
+/* SÜPER */
+{isim:"Ferrari 488", deger:15000, sans:0.01},
+{isim:"Lamborghini Huracan", deger:17000, sans:0.01}
+
+];
+
+function rastgeleAracSec(){
+
+let rand = Math.random();
+let toplam = 0;
+
+for(let i=0;i<araclar.length;i++){
+
+toplam += araclar[i].sans;
+
+if(rand <= toplam){
+return araclar[i];
+}
+
+}
+
+return araclar[0];
+}
+
 // FIREBASE
-const firebaseConfig = {
+const config={
 apiKey:"AIzaSyCSQZUKC4ci14LU4e4KpniDfTvZqzUJA",
-authDomain:"test-mode-bbc5d.firebaseapp.com",
-databaseURL:"https://test-mode-bbc5d-default-rtdb.firebaseio.com",
-projectId:"test-mode-bbc5d"
+databaseURL:"https://test-mode-bbc5d-default-rtdb.firebaseio.com"
 };
-firebase.initializeApp(firebaseConfig);
+firebase.initializeApp(config);
 const db=firebase.database();
 
 // kullanıcı
-let isim=localStorage.getItem("isim");
-if(!isim){
-isim=prompt("İsmin:");
+let isim=localStorage.getItem("isim")||prompt("İsim:");
 localStorage.setItem("isim",isim);
-}
 
 // veri
-let para=0,banka=0,guc=1,silah="yok";
+let para=0,banka=0,guc=1,silah="yok",envanter=[],maymuncuk=0;
 let hapiste=false,hapisBitis=0;
 
-// kayıt
-db.ref("oyuncular/"+isim).once("value",snap=>{
-if(!snap.exists()){
-db.ref("oyuncular/"+isim).set({para:0,banka:0,guc:1});
-}
-});
-
-// aktiflik
-db.ref("oyuncular/"+isim).update({aktif:true});
-window.onbeforeunload=()=>db.ref("oyuncular/"+isim).update({aktif:false});
-
-// sync
+// sync (🔥 FIX: hapiste ve hapisBitis eklendi)
 db.ref("oyuncular/"+isim).on("value",snap=>{
 let d=snap.val();
 if(d){
 para=d.para||0;
 banka=d.banka||0;
 guc=d.guc||1;
+envanter=d.envanter||[];
+maymuncuk=d.maymuncuk||0;
+hapiste=d.hapiste||false;
+hapisBitis=d.hapisBitis||0;
 guncelle();
 }
 });
@@ -104,134 +168,171 @@ guncelle();
 // ekran
 function ekran(s){
 
-// SOYGUN
+if(hapisKontrol())return;
+
+// soygun
 if(s=="soygun"){
 icerik.innerHTML=`
 <div class="panel">
-<h3>Normal Soygun</h3>
 <button onclick="soygun(100,0.2)">Kapkaç</button>
-<button onclick="soygun(300,0.4)">Araba</button>
 <button onclick="soygun(800,0.6)">Market</button>
-</div>
-
-<div class="panel">
-<h3>💀 Banka Soygunu</h3>
-<button onclick="katil()">Katıl (2000₺)</button>
-<div id="katilanlar"></div>
-</div>
-
-<p id="sonuc"></p>
-`;
-bankaDinle();
+<button onclick="soygunArac()">🚗 Araç Soy</button>
+</div>`;
 }
 
-// EKİPMAN
+// ekipman
 if(s=="ekipman"){
 icerik.innerHTML=`
 <div class="panel">
 <h3>Silahlar</h3>
-<button onclick="silahAl('Tabanca',500)">🔫 Tabanca - 500₺</button>
-<button onclick="silahAl('AK47',2000)">💣 AK47 - 2000₺</button>
-<button onclick="silahAl('Sniper',4000)">☠️ Sniper - 4000₺</button>
-</div>
-`;
+<button onclick="silahAl('Tabanca',500)">Tabanca (500)</button>
+<button onclick="silahAl('AK47',2000)">AK47 (2000)</button>
+<button onclick="silahAl('Sniper',4000)">Sniper (4000)</button>
+
+<h3>Araç</h3>
+<button onclick="maymuncukAl()">🔑 Maymuncuk (1000)</button>
+
+<p>Maymuncuk: ${maymuncuk}</p>
+</div>`;
 }
 
-// BANKA
+// banka
 if(s=="banka"){
 icerik.innerHTML=`
-<div class="panel">
-<h3>Banka</h3>
-
-<p>Nakit: ${para}</p>
-<p>Banka: ${banka}</p>
-
-<input id="miktar" placeholder="Miktar">
+<input id="miktar">
 <button onclick="yatir()">Yatır</button>
 <button onclick="cek()">Çek</button>
 
-<hr>
+<input id="hedef">
+<input id="gonder">
+<button onclick="gonderPara()">Gönder</button>`;
+}
 
-<input id="hedef" placeholder="Oyuncu adı">
-<input id="gonderMiktar" placeholder="Gönderilecek miktar">
-<button onclick="paraGonder()">Oyuncuya Gönder</button>
+// saldır
+if(s=="saldir"){
+icerik.innerHTML=`<select id="hedefList"></select><button onclick="saldir()">Saldır</button>`;
+oyuncuListele();
+}
+
+// blackjack
+if(s=="kumar"){
+icerik.innerHTML=`
+<input id="bahis">
+<button onclick="baslat()">Başla</button>
+<p id="bj"></p>
+<p id="son"></p>
+<button onclick="kart()">Kart</button>
+<button onclick="dur()">Dur</button>`;
+}
+
+// kazi
+if(s=="kazi"){
+icerik.innerHTML=`<button onclick="kazi()">Kazı (500)</button><p id="sonuc"></p>`;
+}
+
+// envanter
+if(s=="envanter"){
+
+let html="<div class='panel'><h3>🎒 Envanter</h3>";
+
+envanter.forEach((a,i)=>{
+
+html+=`
+<div style="border-bottom:1px solid #333;padding:5px;">
+<b>${a.isim}</b>
+
+${a.tip=="silah" ? `<button onclick="kullan(${i})">Kullan</button>` : ""}
+
+${a.deger ? `<span>💰 ${a.deger}</span>` : ""}
 
 </div>
 `;
+
+});
+
+html+="</div>";
+
+icerik.innerHTML=html;
+}
+
+// tüccar
+if(s=="tuccar"){
+let html="<div class='panel'>";
+envanter.forEach((a,i)=>html+=`<button onclick="sat(${i})">${a.isim} (${a.deger})</button>`);
+html+="</div>";
+icerik.innerHTML=html;
 }
 
 }
 
-// NORMAL SOYGUN
-function soygun(odul,risk){
-
-if(hapiste){
-sonuc("⛓️ Hapistesin");
-return;
+// soygun
+function soygun(o,r){
+if(Math.random()>r){para+=o;}else{para*=0.5;}
+kaydet();guncelle();
 }
 
-let sans=Math.random()+(guc*0.02);
+// araç
+function soygunArac(){
+if(maymuncuk<=0){alert("Maymuncuk lazım");return;}
+maymuncuk--;
 
-if(sans>risk){
-para+=odul;
+let a = rastgeleAracSec();
 
-if(Math.random()>0.7){
-guc++;
+envanter.push(a);
+
+kaydet();guncelle();
 }
 
-sonuc("+"+odul);
-
-}else{
-para=0;
-silah="yok";
-
-let sure=Math.random()*150+30;
-hapiste=true;
-hapisBitis=Date.now()+sure*1000;
-
-hapis();
+// satış
+function sat(i){
+para+=envanter[i].deger;
+envanter.splice(i,1);
+kaydet();guncelle();
 }
 
-kaydet();
-guncelle();
+// maymuncuk
+function maymuncukAl(){
+if(para<1000)return;
+para-=1000;
+maymuncuk++;
+kaydet();guncelle();
 }
 
-// BANKA RAID
-function katil(){
-if(para<2000)return;
-para-=2000;
-db.ref("raid").push({isim});
-}
-
-function bankaDinle(){
-db.ref("raid").on("value",snap=>{
-let d=snap.val();
-let liste=[];
-
-if(d){
-for(let i in d) liste.push(d[i].isim);
-}
-
-katilanlar.innerHTML=liste.join("<br>");
-
-if(liste.length>=4){
-alert("💀 Soygun başladı!");
-db.ref("raid").remove();
-}
+// banka
+function yatir(){let m=Number(miktar.value);if(m<=para){para-=m;banka+=m;}kaydet();guncelle();}
+function cek(){let m=Number(miktar.value);if(m<=banka){banka-=m;para+=m;}kaydet();guncelle();}
+function gonderPara(){
+let h=hedef.value;
+let m=Number(gonder.value);
+db.ref("oyuncular/"+h+"/banka").once("value",snap=>{
+db.ref("oyuncular/"+h).update({banka:(snap.val()||0)+m});
+banka-=m;
+kaydet();guncelle();
 });
 }
 
-// PvP
+// saldır
+function oyuncuListele(){
+db.ref("oyuncular").on("value",snap=>{
+let d=snap.val();
+let html="";
+for(let i in d){if(i!=isim) html+=`<option>${i}</option>`;}
+hedefList.innerHTML=html;
+});
+}
+
 function saldir(){
-let hedef=prompt("Kime saldır?");
-db.ref("oyuncular/"+hedef).once("value",snap=>{
+let h=hedefList.value;
+db.ref("oyuncular/"+h).once("value",snap=>{
 let d=snap.val();
 if(!d)return;
 
-if(guc>=(d.guc||1)){
-para+=200;
+if(Math.random()<0.5){
+let kazan=Math.floor(d.para*0.3);
+db.ref("oyuncular/"+h).update({para:d.para-kazan});
+para+=kazan;
 }else{
-para-=100;
+para-=Math.floor(para*0.2);
 }
 kaydet();guncelle();
 });
@@ -241,10 +342,9 @@ kaydet();guncelle();
 function oyuncular(){
 db.ref("oyuncular").on("value",snap=>{
 let d=snap.val();
-let html="";
-for(let i in d){
-html+=`<p>${d[i].aktif?"🟢":"⚫"} ${i}</p>`;
-}
+let html="<div class='panel'>";
+for(let i in d){html+=`<p>${i}</p>`;}
+html+="</div>";
 icerik.innerHTML=html;
 });
 }
@@ -254,86 +354,69 @@ function liderlik(){
 db.ref("oyuncular").once("value",snap=>{
 let d=snap.val();
 let arr=[];
-for(let i in d) arr.push({isim:i,para:d[i].para});
+for(let i in d)arr.push({i,para:d[i].para});
 arr.sort((a,b)=>b.para-a.para);
-
-let html="<h3>Liderlik</h3>";
-arr.slice(0,10).forEach(k=>{
-html+=`<p>${k.isim} - ${k.para}</p>`;
-});
+let html="<div class='panel'>";
+arr.forEach(a=>html+=`<p>${a.i} ${a.para}</p>`);
+html+="</div>";
 icerik.innerHTML=html;
 });
 }
 
-// banka
-function yatir(){
-let m=Number(miktar.value);
-if(m<=para){para-=m;banka+=m;}
-kaydet();guncelle();
-}
+// blackjack
+let el=[];
+function baslat(){let b=Number(bahis.value);if(b>para)return;para-=b;el=[Math.random()*10|0];guncelleBJ();}
+function kart(){el.push(Math.random()*10|0);guncelleBJ();}
+function dur(){let t=el.reduce((a,b)=>a+b,0);son.innerText=t>15?"Kazandın":"Kaybettin";guncelle();}
+function guncelleBJ(){bj.innerText=el.join(",");}
 
-function cek(){
-let m=Number(miktar.value);
-if(m<=banka){banka-=m;para+=m;}
-kaydet();guncelle();
-}
-
-// 💸 PARA GÖNDER
-function paraGonder(){
-let h=hedef.value;
-let m=Number(gonderMiktar.value);
-
-if(m>0 && m<=banka){
-
-db.ref("oyuncular/"+h+"/banka").once("value",snap=>{
-let p=snap.val()||0;
-
-db.ref("oyuncular/"+h).update({
-banka:p+m
-});
-
-banka-=m;
-kaydet();
-guncelle();
-});
-
-}
-}
-
-// ekipman
-function silahAl(ad,fiyat){
-if(para>=fiyat){
-para-=fiyat;
-silah=ad;
-kaydet();guncelle();
-}
-}
+// kazi
+function kazi(){if(para<500)return;para-=500;let k=Math.random()<0.2?Math.random()*5000|0:0;para+=k;sonuc.innerText=k?"Kazandın "+k:"Kaybettin";kaydet();guncelle();}
 
 // hapis
-function hapis(){
-let i=setInterval(()=>{
-if(Date.now()>hapisBitis){
-hapiste=false;
-clearInterval(i);
-}
-},1000);
+function hapisKontrol(){
+if(!hapiste)return false;
+alert("Hapistesin");
+return true;
 }
 
-// save
+// save (🔥 FIX: hapiste kaydediliyor)
 function kaydet(){
 db.ref("oyuncular/"+isim).update({
-para,banka,guc
+para,banka,guc,silah,envanter,maymuncuk,hapiste,hapisBitis
 });
 }
 
 // ui
-function sonuc(y){document.getElementById("sonuc").innerText=y;}
 function guncelle(){
-paraEl.innerText=para;
-bankaEl.innerText=banka;
-gucEl.innerText=guc;
-silahEl.innerText=silah;
-durum.innerText=hapiste?"Hapiste":"Özgür";
+document.getElementById("para").innerText=para;
+document.getElementById("banka").innerText=banka;
+document.getElementById("guc").innerText=guc;
+document.getElementById("silah").innerText=silah;
+document.getElementById("maymuncuk").innerText=maymuncuk;
+document.getElementById("durum").innerText=hapiste?"Hapiste":"Özgür";
+}
+
+function silahAl(a,f){
+
+if(para < f){
+alert("Yeterli paran yok!");
+return;
+}
+
+para -= f;
+
+// 🔥 envantere eklenir (direkt takılmaz)
+envanter.push({
+isim: a,
+tip: "silah",
+guc: 5
+});
+
+alert(a + " satın alındı!");
+
+kaydet();
+guncelle();
 }
 
 </script>
