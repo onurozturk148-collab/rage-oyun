@@ -2,296 +2,338 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>RAGE Online</title>
+<title>RAGE</title>
 
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
-body { margin:0; font-family:Arial; background:#0d0d0d; color:white; }
-
-.header {
-  background:black;
-  padding:20px;
-  text-align:center;
-  font-size:28px;
-  color:red;
-  border-bottom:2px solid red;
-}
-
-.container { display:flex; height:calc(100vh - 80px); }
-
-.left {
-  width:220px;
-  background:#1a1a1a;
-}
-
-.menu-title {
-  padding:10px;
-  background:#000;
-  color:#aaa;
-  border-bottom:1px solid #333;
-}
-
-.menu-item {
-  padding:12px;
-  border-bottom:1px solid #333;
-  cursor:pointer;
-  transition:0.2s;
-}
-
-.menu-item:hover {
-  background:#222;
-  color:red;
-  padding-left:20px;
-}
-
-.center {
-  flex:1;
-  padding:20px;
-}
-
-.panel {
-  background:#1a1a1a;
-  padding:20px;
-  border:1px solid #333;
-  box-shadow:0 0 10px #000;
-}
-
-.right {
-  width:220px;
-  background:#1a1a1a;
-  padding:10px;
-}
-
-.stat {
-  padding:10px;
-  border-bottom:1px solid #333;
-}
-
-button {
-  width:100%;
-  padding:12px;
-  margin-top:10px;
-  background:red;
-  border:none;
-  color:white;
-  cursor:pointer;
-  transition:0.2s;
-}
-
-button:hover {
-  background:darkred;
-  transform:scale(1.03);
-}
-
-.sonuc-box {
-  margin-top:15px;
-  padding:10px;
-  background:#000;
-  border:1px solid red;
-}
+body { margin:0; font-family:Arial; background:#111; color:white; }
+.header { background:#000; border-bottom:2px solid red; text-align:center; padding:20px; font-size:30px; color:red; }
+.container { display:flex; }
+.left { width:220px; background:#1b1b1b; }
+.menu-title { background:#000; padding:10px; color:#aaa; }
+.menu-item { padding:10px; border-bottom:1px solid #333; cursor:pointer; }
+.menu-item:hover { background:#333; }
+.center { flex:1; padding:10px; }
+.panel { background:#1b1b1b; border:1px solid #333; margin-bottom:10px; padding:10px; }
+.right { width:250px; background:#1b1b1b; padding:10px; }
+.stat { padding:8px; border-bottom:1px solid #333; }
+button { width:100%; padding:10px; margin-top:5px; background:red; border:none; color:white; cursor:pointer; }
+input { width:100%; padding:8px; margin-top:5px; }
 </style>
-</head>
 
+</head>
 <body>
 
-<div class="header">RAGE ONLINE</div>
+<div class="header">RAGE</div>
 
 <div class="container">
 
-<!-- SOL -->
 <div class="left">
 <div class="menu-title">GENEL</div>
-<div class="menu-item" onclick="ekran('soygun')">💰 Soygun</div>
-<div class="menu-item" onclick="ekran('ekipman')">🔫 Ekipman</div>
+<div class="menu-item" onclick="ekran('soygun')">Soygun</div>
+<div class="menu-item" onclick="ekran('ekipman')">Ekipman</div>
 
 <div class="menu-title">SOSYAL</div>
-<div class="menu-item" onclick="ekran('oyuncular')">👥 Oyuncular</div>
-<div class="menu-item" onclick="ekran('banka')">🏦 Banka</div>
+<div class="menu-item" onclick="oyuncular()">Oyuncular</div>
+<div class="menu-item" onclick="liderlik()">Liderlik</div>
+<div class="menu-item" onclick="saldir()">Saldır</div>
+
+<div class="menu-title">ÇEVRE</div>
+<div class="menu-item" onclick="ekran('banka')">Banka</div>
 </div>
 
-<!-- ORTA -->
-<div class="center" id="icerik">
-<div class="panel">
-<h2>Hoş geldin</h2>
-<p>Menüden bir seçim yap</p>
-</div>
-</div>
+<div class="center" id="icerik"></div>
 
-<!-- SAĞ -->
 <div class="right">
-<div class="stat">💰 Para: <span id="para">0</span></div>
-<div class="stat">🔫 Silah: <span id="silah">Yok</span></div>
-<div class="stat" id="durum">Durum: Hazır</div>
+<div class="stat">💰 Nakit: <span id="para">0</span></div>
+<div class="stat">🏦 Banka: <span id="banka">0</span></div>
+<div class="stat">💪 Güç: <span id="guc">1</span></div>
+<div class="stat">🔫 Silah: <span id="silah">yok</span></div>
+<div class="stat" id="durum">Özgür</div>
 </div>
 
 </div>
 
 <script>
 
-// 🔥 FIREBASE
+// FIREBASE
 const firebaseConfig = {
-  apiKey: "AIzaSyCSQZUKC4ci14LU4e4KpniDfTvZqzUJA",
-  authDomain: "test-mode-bbc5d.firebaseapp.com",
-  databaseURL: "https://test-mode-bbc5d-default-rtdb.firebaseio.com",
-  projectId: "test-mode-bbc5d"
+apiKey:"AIzaSyCSQZUKC4ci14LU4e4KpniDfTvZqzUJA",
+authDomain:"test-mode-bbc5d.firebaseapp.com",
+databaseURL:"https://test-mode-bbc5d-default-rtdb.firebaseio.com",
+projectId:"test-mode-bbc5d"
 };
-
 firebase.initializeApp(firebaseConfig);
-const db = firebase.database();
+const db=firebase.database();
 
-// 👤 KAYIT
-let isim = localStorage.getItem("isim");
+// kullanıcı
+let isim=localStorage.getItem("isim");
 if(!isim){
-  isim = prompt("İsmin:");
-  localStorage.setItem("isim", isim);
+isim=prompt("İsmin:");
+localStorage.setItem("isim",isim);
 }
-let oyuncuID = isim;
 
-// 🎮 DATA
-let para = 0;
-let silah = "yok";
+// veri
+let para=0,banka=0,guc=1,silah="yok";
+let hapiste=false,hapisBitis=0;
 
-// 🔥 DATABASE
-db.ref("oyuncular/" + oyuncuID).once("value", snap=>{
-  if(!snap.exists()){
-    db.ref("oyuncular/" + oyuncuID).set({isim:isim,para:0});
-  }
+// kayıt
+db.ref("oyuncular/"+isim).once("value",snap=>{
+if(!snap.exists()){
+db.ref("oyuncular/"+isim).set({para:0,banka:0,guc:1});
+}
 });
 
-db.ref("oyuncular/" + oyuncuID + "/para").on("value", snap=>{
-  if(snap.val()!=null){
-    para = snap.val();
-    guncelle();
-  }
+// aktiflik
+db.ref("oyuncular/"+isim).update({aktif:true});
+window.onbeforeunload=()=>db.ref("oyuncular/"+isim).update({aktif:false});
+
+// sync
+db.ref("oyuncular/"+isim).on("value",snap=>{
+let d=snap.val();
+if(d){
+para=d.para||0;
+banka=d.banka||0;
+guc=d.guc||1;
+guncelle();
+}
 });
 
-// 📺 MENÜ
+// ekran
 function ekran(s){
 
+// SOYGUN
 if(s=="soygun"){
-document.getElementById("icerik").innerHTML=`
+icerik.innerHTML=`
 <div class="panel">
-<h2>Soygun</h2>
-
-<button onclick="soygun(100,0.2)">🏃 Kapkaç</button>
-<button onclick="soygun(300,0.4)">🚗 Araba</button>
-<button onclick="soygun(800,0.6)">🏪 Market</button>
-<button onclick="soygun(2000,0.8)">🏦 Banka</button>
-
-<div id="sonuc" class="sonuc-box"></div>
+<h3>Normal Soygun</h3>
+<button onclick="soygun(100,0.2)">Kapkaç</button>
+<button onclick="soygun(300,0.4)">Araba</button>
+<button onclick="soygun(800,0.6)">Market</button>
 </div>
+
+<div class="panel">
+<h3>💀 Banka Soygunu</h3>
+<button onclick="katil()">Katıl (2000₺)</button>
+<div id="katilanlar"></div>
+</div>
+
+<p id="sonuc"></p>
 `;
+bankaDinle();
 }
 
+// EKİPMAN
 if(s=="ekipman"){
-document.getElementById("icerik").innerHTML=`
+icerik.innerHTML=`
 <div class="panel">
-<h2>Ekipman</h2>
-
-<button onclick="silahAl('tabanca',500)">🔫 Tabanca (500)</button>
-<button onclick="silahAl('ak47',2000)">💣 AK47 (2000)</button>
-<button onclick="silahAl('sniper',4000)">☠️ Sniper (4000)</button>
-
-<p>Seçili: ${silah}</p>
+<h3>Silahlar</h3>
+<button onclick="silahAl('Tabanca',500)">🔫 Tabanca - 500₺</button>
+<button onclick="silahAl('AK47',2000)">💣 AK47 - 2000₺</button>
+<button onclick="silahAl('Sniper',4000)">☠️ Sniper - 4000₺</button>
 </div>
 `;
 }
 
-if(s=="oyuncular"){
-db.ref("oyuncular").on("value",snap=>{
-let html="<div class='panel'><h2>Oyuncular</h2>";
-let d=snap.val();
+// BANKA
+if(s=="banka"){
+icerik.innerHTML=`
+<div class="panel">
+<h3>Banka</h3>
 
-for(let i in d){
-html+=`<p>${d[i].isim} - 💰 ${d[i].para}</p>`;
+<p>Nakit: ${para}</p>
+<p>Banka: ${banka}</p>
+
+<input id="miktar" placeholder="Miktar">
+<button onclick="yatir()">Yatır</button>
+<button onclick="cek()">Çek</button>
+
+<hr>
+
+<input id="hedef" placeholder="Oyuncu adı">
+<input id="gonderMiktar" placeholder="Gönderilecek miktar">
+<button onclick="paraGonder()">Oyuncuya Gönder</button>
+
+</div>
+`;
 }
 
-html+="</div>";
-document.getElementById("icerik").innerHTML=html;
+}
+
+// NORMAL SOYGUN
+function soygun(odul,risk){
+
+if(hapiste){
+sonuc("⛓️ Hapistesin");
+return;
+}
+
+let sans=Math.random()+(guc*0.02);
+
+if(sans>risk){
+para+=odul;
+
+if(Math.random()>0.7){
+guc++;
+}
+
+sonuc("+"+odul);
+
+}else{
+para=0;
+silah="yok";
+
+let sure=Math.random()*150+30;
+hapiste=true;
+hapisBitis=Date.now()+sure*1000;
+
+hapis();
+}
+
+kaydet();
+guncelle();
+}
+
+// BANKA RAID
+function katil(){
+if(para<2000)return;
+para-=2000;
+db.ref("raid").push({isim});
+}
+
+function bankaDinle(){
+db.ref("raid").on("value",snap=>{
+let d=snap.val();
+let liste=[];
+
+if(d){
+for(let i in d) liste.push(d[i].isim);
+}
+
+katilanlar.innerHTML=liste.join("<br>");
+
+if(liste.length>=4){
+alert("💀 Soygun başladı!");
+db.ref("raid").remove();
+}
 });
 }
 
-if(s=="banka"){
-document.getElementById("icerik").innerHTML=`
-<div class="panel">
-<h2>Para Gönder</h2>
+// PvP
+function saldir(){
+let hedef=prompt("Kime saldır?");
+db.ref("oyuncular/"+hedef).once("value",snap=>{
+let d=snap.val();
+if(!d)return;
 
-<input id="hedef" placeholder="isim">
-<input id="miktar" placeholder="miktar">
-
-<button onclick="paraGonder()">Gönder</button>
-</div>
-`;
-}
-
-}
-
-// 🎲 SOYGUN
-function soygun(odul,risk){
-
-let bonus = 0;
-if(silah=="tabanca") bonus=0.1;
-if(silah=="ak47") bonus=0.25;
-if(silah=="sniper") bonus=0.4;
-
-if(Math.random()+bonus > risk){
-para+=odul;
-sonuc("💰 +" + odul);
+if(guc>=(d.guc||1)){
+para+=200;
 }else{
-sonuc("🚓 Yakalandın!");
+para-=100;
+}
+kaydet();guncelle();
+});
 }
 
-guncelle();
+// oyuncular
+function oyuncular(){
+db.ref("oyuncular").on("value",snap=>{
+let d=snap.val();
+let html="";
+for(let i in d){
+html+=`<p>${d[i].aktif?"🟢":"⚫"} ${i}</p>`;
+}
+icerik.innerHTML=html;
+});
+}
+
+// liderlik
+function liderlik(){
+db.ref("oyuncular").once("value",snap=>{
+let d=snap.val();
+let arr=[];
+for(let i in d) arr.push({isim:i,para:d[i].para});
+arr.sort((a,b)=>b.para-a.para);
+
+let html="<h3>Liderlik</h3>";
+arr.slice(0,10).forEach(k=>{
+html+=`<p>${k.isim} - ${k.para}</p>`;
+});
+icerik.innerHTML=html;
+});
+}
+
+// banka
+function yatir(){
+let m=Number(miktar.value);
+if(m<=para){para-=m;banka+=m;}
+kaydet();guncelle();
+}
+
+function cek(){
+let m=Number(miktar.value);
+if(m<=banka){banka-=m;para+=m;}
+kaydet();guncelle();
+}
+
+// 💸 PARA GÖNDER
+function paraGonder(){
+let h=hedef.value;
+let m=Number(gonderMiktar.value);
+
+if(m>0 && m<=banka){
+
+db.ref("oyuncular/"+h+"/banka").once("value",snap=>{
+let p=snap.val()||0;
+
+db.ref("oyuncular/"+h).update({
+banka:p+m
+});
+
+banka-=m;
 kaydet();
+guncelle();
+});
+
+}
 }
 
-// 🔫 SİLAH AL
+// ekipman
 function silahAl(ad,fiyat){
 if(para>=fiyat){
 para-=fiyat;
 silah=ad;
-sonuc("🔫 " + ad + " satın alındı");
-guncelle();
-kaydet();
-}else{
-alert("Paran yok!");
+kaydet();guncelle();
 }
 }
 
-// 🏦 PARA
-function paraGonder(){
-let h=document.getElementById("hedef").value;
-let m=Number(document.getElementById("miktar").value);
-
-db.ref("oyuncular").once("value",snap=>{
-let d=snap.val();
-
-for(let i in d){
-if(d[i].isim==h){
-db.ref("oyuncular/"+i+"/para").set(d[i].para+m);
-para-=m;
-kaydet();
-alert("Gönderildi");
+// hapis
+function hapis(){
+let i=setInterval(()=>{
+if(Date.now()>hapisBitis){
+hapiste=false;
+clearInterval(i);
 }
+},1000);
 }
+
+// save
+function kaydet(){
+db.ref("oyuncular/"+isim).update({
+para,banka,guc
 });
 }
 
-// 🔁
-function kaydet(){
-db.ref("oyuncular/"+oyuncuID).update({para:para});
-}
-
-function sonuc(y){
-let el = document.getElementById("sonuc");
-if(el) el.innerText = y;
-}
-
+// ui
+function sonuc(y){document.getElementById("sonuc").innerText=y;}
 function guncelle(){
-document.getElementById("para").innerText=para;
-document.getElementById("silah").innerText=silah;
+paraEl.innerText=para;
+bankaEl.innerText=banka;
+gucEl.innerText=guc;
+silahEl.innerText=silah;
+durum.innerText=hapiste?"Hapiste":"Özgür";
 }
 
 </script>
