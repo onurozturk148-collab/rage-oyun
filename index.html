@@ -8,16 +8,89 @@
 <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 
 <style>
-body { margin:0; font-family:Arial; background:#1a1a1a; color:white;}
-.header { background:black; padding:20px; text-align:center; font-size:30px; color:red;}
-.container { display:flex;}
-.left { width:20%; background:#2b2b2b; padding:10px;}
-.menu-item { padding:10px; border-bottom:1px solid #444; cursor:pointer;}
-.menu-item:hover { background:#444;}
-.center { width:60%; padding:20px;}
-.right { width:20%; background:#2b2b2b; padding:10px;}
-button { padding:10px; background:red; color:white; border:none; margin-top:10px;}
-input { padding:5px; margin-top:5px; width:100%;}
+body { margin:0; font-family:Arial; background:#0d0d0d; color:white; }
+
+.header {
+  background:black;
+  padding:20px;
+  text-align:center;
+  font-size:28px;
+  color:red;
+  border-bottom:2px solid red;
+}
+
+.container { display:flex; height:calc(100vh - 80px); }
+
+.left {
+  width:220px;
+  background:#1a1a1a;
+}
+
+.menu-title {
+  padding:10px;
+  background:#000;
+  color:#aaa;
+  border-bottom:1px solid #333;
+}
+
+.menu-item {
+  padding:12px;
+  border-bottom:1px solid #333;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+.menu-item:hover {
+  background:#222;
+  color:red;
+  padding-left:20px;
+}
+
+.center {
+  flex:1;
+  padding:20px;
+}
+
+.panel {
+  background:#1a1a1a;
+  padding:20px;
+  border:1px solid #333;
+  box-shadow:0 0 10px #000;
+}
+
+.right {
+  width:220px;
+  background:#1a1a1a;
+  padding:10px;
+}
+
+.stat {
+  padding:10px;
+  border-bottom:1px solid #333;
+}
+
+button {
+  width:100%;
+  padding:12px;
+  margin-top:10px;
+  background:red;
+  border:none;
+  color:white;
+  cursor:pointer;
+  transition:0.2s;
+}
+
+button:hover {
+  background:darkred;
+  transform:scale(1.03);
+}
+
+.sonuc-box {
+  margin-top:15px;
+  padding:10px;
+  background:#000;
+  border:1px solid red;
+}
 </style>
 </head>
 
@@ -27,19 +100,30 @@ input { padding:5px; margin-top:5px; width:100%;}
 
 <div class="container">
 
+<!-- SOL -->
 <div class="left">
-  <div class="menu-item" onclick="ekran('soygun')">💰 Soygun</div>
-  <div class="menu-item" onclick="ekran('ekipman')">🔫 Ekipman</div>
-  <div class="menu-item" onclick="ekran('oyuncular')">👥 Oyuncular</div>
-  <div class="menu-item" onclick="ekran('banka')">🏦 Banka</div>
+<div class="menu-title">GENEL</div>
+<div class="menu-item" onclick="ekran('soygun')">💰 Soygun</div>
+<div class="menu-item" onclick="ekran('ekipman')">🔫 Ekipman</div>
+
+<div class="menu-title">SOSYAL</div>
+<div class="menu-item" onclick="ekran('oyuncular')">👥 Oyuncular</div>
+<div class="menu-item" onclick="ekran('banka')">🏦 Banka</div>
 </div>
 
-<div class="center" id="icerik">Hoş geldin!</div>
+<!-- ORTA -->
+<div class="center" id="icerik">
+<div class="panel">
+<h2>Hoş geldin</h2>
+<p>Menüden bir seçim yap</p>
+</div>
+</div>
 
+<!-- SAĞ -->
 <div class="right">
-  <p>💰 Para: <span id="para">0</span></p>
-  <p>🔫 Silah: <span id="silah">Yok</span></p>
-  <p id="durum">Hazır</p>
+<div class="stat">💰 Para: <span id="para">0</span></div>
+<div class="stat">🔫 Silah: <span id="silah">Yok</span></div>
+<div class="stat" id="durum">Durum: Hazır</div>
 </div>
 
 </div>
@@ -57,41 +141,25 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
 
-// 👤 KAYIT SİSTEMİ (FULL FIX)
+// 👤 KAYIT
 let isim = localStorage.getItem("isim");
-
-if(!isim || isim == "null" || isim.trim() == ""){
-  isim = prompt("İsmini gir:");
-  if(!isim || isim.trim()==""){
-    isim = "Oyuncu" + Math.floor(Math.random()*1000);
-  }
+if(!isim){
+  isim = prompt("İsmin:");
   localStorage.setItem("isim", isim);
 }
+let oyuncuID = isim;
 
-let oyuncuID = localStorage.getItem("oyuncuID");
-
-if(!oyuncuID){
-  oyuncuID = isim + "_" + Math.floor(Math.random()*1000);
-  localStorage.setItem("oyuncuID", oyuncuID);
-}
-
-// 🎮 OYUN
+// 🎮 DATA
 let para = 0;
 let silah = "yok";
-let hapiste = false;
-let cooldown = false;
 
-// 🔥 DATABASE KAYIT (tekrar açılmaz)
+// 🔥 DATABASE
 db.ref("oyuncular/" + oyuncuID).once("value", snap=>{
   if(!snap.exists()){
-    db.ref("oyuncular/" + oyuncuID).set({
-      isim: isim,
-      para: 0
-    });
+    db.ref("oyuncular/" + oyuncuID).set({isim:isim,para:0});
   }
 });
 
-// 🔄 PARA SENKRON
 db.ref("oyuncular/" + oyuncuID + "/para").on("value", snap=>{
   if(snap.val()!=null){
     para = snap.val();
@@ -99,114 +167,84 @@ db.ref("oyuncular/" + oyuncuID + "/para").on("value", snap=>{
   }
 });
 
-// 📺 SAYFA
-function ekran(sayfa){
+// 📺 MENÜ
+function ekran(s){
 
-if(sayfa=="soygun"){
-document.getElementById("icerik").innerHTML = `
-<h2>💰 Soygun</h2>
+if(s=="soygun"){
+document.getElementById("icerik").innerHTML=`
+<div class="panel">
+<h2>Soygun</h2>
 
-<button onclick="soygun('kapkac')">🏃 Kapkaççılık</button>
-<button onclick="soygun('araba')">🚗 Araba</button>
-<button onclick="soygun('market')">🏪 Market</button>
-<button onclick="soygun('banka')">🏦 Banka</button>
+<button onclick="soygun(100,0.2)">🏃 Kapkaç</button>
+<button onclick="soygun(300,0.4)">🚗 Araba</button>
+<button onclick="soygun(800,0.6)">🏪 Market</button>
+<button onclick="soygun(2000,0.8)">🏦 Banka</button>
 
-<p id="sonuc"></p>
+<div id="sonuc" class="sonuc-box"></div>
+</div>
 `;
 }
 
-if(sayfa=="ekipman"){
-document.getElementById("icerik").innerHTML = `
-<h2>🔫 Silahlar</h2>
+if(s=="ekipman"){
+document.getElementById("icerik").innerHTML=`
+<div class="panel">
+<h2>Ekipman</h2>
 
 <button onclick="silahAl('tabanca',500)">🔫 Tabanca (500)</button>
-<button onclick="silahAl('ak47',2000)">💣 AK-47 (2000)</button>
+<button onclick="silahAl('ak47',2000)">💣 AK47 (2000)</button>
 <button onclick="silahAl('sniper',4000)">☠️ Sniper (4000)</button>
+
+<p>Seçili: ${silah}</p>
+</div>
 `;
 }
 
-if(sayfa=="oyuncular"){
-db.ref("oyuncular").on("value", snap=>{
-let data = snap.val();
-let html = "<h2>👥 Oyuncular</h2>";
+if(s=="oyuncular"){
+db.ref("oyuncular").on("value",snap=>{
+let html="<div class='panel'><h2>Oyuncular</h2>";
+let d=snap.val();
 
-for(let i in data){
-if(data[i].isim){
-html += "<p>" + data[i].isim + " - 💰 " + data[i].para + "</p>";
-}
+for(let i in d){
+html+=`<p>${d[i].isim} - 💰 ${d[i].para}</p>`;
 }
 
-document.getElementById("icerik").innerHTML = html;
+html+="</div>";
+document.getElementById("icerik").innerHTML=html;
 });
 }
 
-if(sayfa=="banka"){
-document.getElementById("icerik").innerHTML = `
-<h2>🏦 Para Gönder</h2>
-<input id="hedef" placeholder="Oyuncu adı">
-<input id="miktar" placeholder="Miktar">
+if(s=="banka"){
+document.getElementById("icerik").innerHTML=`
+<div class="panel">
+<h2>Para Gönder</h2>
+
+<input id="hedef" placeholder="isim">
+<input id="miktar" placeholder="miktar">
+
 <button onclick="paraGonder()">Gönder</button>
+</div>
 `;
 }
 
 }
 
-// 🔫 SİLAH BONUS
-function silahBonus(){
-if(silah=="tabanca") return 0.1;
-if(silah=="ak47") return 0.25;
-if(silah=="sniper") return 0.4;
-return 0;
-}
-
 // 🎲 SOYGUN
-function soygun(tur){
+function soygun(odul,risk){
 
-if(hapiste){ sonucYaz("⛔ Hapistesin"); return; }
-if(cooldown){ sonucYaz("⏳ Bekle"); return; }
+let bonus = 0;
+if(silah=="tabanca") bonus=0.1;
+if(silah=="ak47") bonus=0.25;
+if(silah=="sniper") bonus=0.4;
 
-cooldown=true;
-
-let risk=0;
-let odul=0;
-
-if(tur=="kapkac"){ risk=0.2; odul=Math.random()*100; }
-if(tur=="araba"){ risk=0.4; odul=Math.random()*300; }
-if(tur=="market"){ risk=0.6; odul=Math.random()*800; }
-if(tur=="banka"){ risk=0.8; odul=Math.random()*2000; }
-
-let sans = Math.random() + silahBonus();
-
-if(sans > risk){
-let kazanc=Math.floor(odul);
-para+=kazanc;
-sonucYaz("💰 +" + kazanc);
+if(Math.random()+bonus > risk){
+para+=odul;
+sonuc("💰 +" + odul);
 }else{
-sonucYaz("🚓 Yakalandın!");
-hapseGir();
+sonuc("🚓 Yakalandın!");
 }
 
 guncelle();
-onlineKaydet();
-
-setTimeout(()=>{cooldown=false;},3000);
-}
-
-// 🚓 HAPİS
-function hapseGir(){
-hapiste=true;
-let sure=10;
-
-let interval=setInterval(()=>{
-sure--;
-document.getElementById("durum").innerText="Hapiste: "+sure;
-
-if(sure<=0){
-hapiste=false;
-document.getElementById("durum").innerText="Özgürsün";
-clearInterval(interval);
-}
-},1000);
+kaydet();
 }
 
 // 🔫 SİLAH AL
@@ -214,56 +252,47 @@ function silahAl(ad,fiyat){
 if(para>=fiyat){
 para-=fiyat;
 silah=ad;
+sonuc("🔫 " + ad + " satın alındı");
 guncelle();
-onlineKaydet();
+kaydet();
+}else{
+alert("Paran yok!");
 }
 }
 
-// 🏦 PARA GÖNDER
+// 🏦 PARA
 function paraGonder(){
+let h=document.getElementById("hedef").value;
+let m=Number(document.getElementById("miktar").value);
 
-let hedef=document.getElementById("hedef").value;
-let miktar=Number(document.getElementById("miktar").value);
+db.ref("oyuncular").once("value",snap=>{
+let d=snap.val();
 
-if(miktar>para){ alert("Paran yok"); return; }
-
-db.ref("oyuncular").once("value", snap=>{
-let data=snap.val();
-
-for(let i in data){
-if(data[i].isim==hedef){
-
-db.ref("oyuncular/"+i).update({
-para:data[i].para+miktar
-});
-
-para-=miktar;
-onlineKaydet();
-
-alert("Gönderildi!");
+for(let i in d){
+if(d[i].isim==h){
+db.ref("oyuncular/"+i+"/para").set(d[i].para+m);
+para-=m;
+kaydet();
+alert("Gönderildi");
 }
 }
 });
 }
 
-// 🔥 ONLINE KAYDET
-function onlineKaydet(){
-db.ref("oyuncular/"+oyuncuID).update({
-para:para
-});
+// 🔁
+function kaydet(){
+db.ref("oyuncular/"+oyuncuID).update({para:para});
 }
 
-// 📊 UI
-function sonucYaz(yazi){
-document.getElementById("sonuc").innerText=yazi;
+function sonuc(y){
+let el = document.getElementById("sonuc");
+if(el) el.innerText = y;
 }
 
 function guncelle(){
 document.getElementById("para").innerText=para;
 document.getElementById("silah").innerText=silah;
 }
-
-guncelle();
 
 </script>
 
